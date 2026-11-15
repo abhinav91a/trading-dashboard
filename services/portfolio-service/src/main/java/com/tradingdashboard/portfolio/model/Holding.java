@@ -7,6 +7,7 @@ import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.math.RoundingMode;
 
 @Entity
 @Table(name = "holdings")
@@ -56,5 +57,16 @@ public class Holding {
 
     public BigDecimal getAverageCost() {
         return averageCost;
+    }
+
+    public void applyBuy(BigDecimal buyQuantity, BigDecimal buyPrice) {
+        BigDecimal newQuantity = quantity.add(buyQuantity);
+        BigDecimal totalCost = quantity.multiply(averageCost).add(buyQuantity.multiply(buyPrice));
+        this.averageCost = totalCost.divide(newQuantity, 4, RoundingMode.HALF_UP);
+        this.quantity = newQuantity;
+    }
+
+    public void applySell(BigDecimal sellQuantity) {
+        this.quantity = quantity.subtract(sellQuantity);
     }
 }
