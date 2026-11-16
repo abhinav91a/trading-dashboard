@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,31 +38,31 @@ public class WatchlistController {
     }
 
     @GetMapping
-    public List<Watchlist> list(@RequestHeader("X-User-Id") String userId) {
+    public List<Watchlist> list(@AuthenticationPrincipal String userId) {
         return service.listForUser(userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Watchlist create(@RequestHeader("X-User-Id") String userId,
+    public Watchlist create(@AuthenticationPrincipal String userId,
                             @Valid @RequestBody CreateWatchlistRequest request) {
         return service.create(userId, request.name());
     }
 
     @GetMapping("/{id}")
-    public WatchlistView get(@RequestHeader("X-User-Id") String userId, @PathVariable UUID id) {
+    public WatchlistView get(@AuthenticationPrincipal String userId, @PathVariable UUID id) {
         return service.getView(userId, id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@RequestHeader("X-User-Id") String userId, @PathVariable UUID id) {
+    public void delete(@AuthenticationPrincipal String userId, @PathVariable UUID id) {
         service.delete(userId, id);
     }
 
     @PostMapping("/{id}/items")
     @ResponseStatus(HttpStatus.CREATED)
-    public WatchlistItem addSymbol(@RequestHeader("X-User-Id") String userId,
+    public WatchlistItem addSymbol(@AuthenticationPrincipal String userId,
                                    @PathVariable UUID id,
                                    @Valid @RequestBody AddSymbolRequest request) {
         return service.addSymbol(userId, id, request.symbol());
@@ -70,7 +70,7 @@ public class WatchlistController {
 
     @DeleteMapping("/{id}/items/{symbol}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeSymbol(@RequestHeader("X-User-Id") String userId,
+    public void removeSymbol(@AuthenticationPrincipal String userId,
                              @PathVariable UUID id,
                              @PathVariable String symbol) {
         service.removeSymbol(userId, id, symbol);
