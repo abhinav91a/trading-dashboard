@@ -14,3 +14,11 @@ td.down { color: #b42318; }
 .status.off { background: #fef3c7; color: #92400e; }
 ul { list-style: none; padding: 0; margin: 0; }
 li { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+.full { grid-column: 1 / -1; }
+.trade-form { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.trade-form input, .trade-form select, .trade-form button { font-size: 14px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 6px; }
+.trade-form input { width: 120px; }
+.trade-form button { background: #1a1d21; color: #fff; border: none; cursor: pointer; }
+.trade-form button:disabled { opacity: 0.5; cursor: default; }
+.msg { font-size: 14px; color: #444; margin: 0 0 12px; }
+tfoot td { font-weight: 600; border-bottom: none; }

@@ -1,6 +1,7 @@
 import { useFeed } from './useFeed'
 import PriceTable from './PriceTable'
 import AlertFeed from './AlertFeed'
+import PortfolioPanel from './PortfolioPanel'
 import './App.css'
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
       <div className="grid">
         <PriceTable prices={prices} />
         <AlertFeed alerts={alerts} />
+        <PortfolioPanel prices={prices} />
       </div>
     </main>
   )
