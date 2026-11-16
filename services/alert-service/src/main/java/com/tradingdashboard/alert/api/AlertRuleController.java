@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,26 +41,26 @@ public class AlertRuleController {
     }
 
     @GetMapping
-    public List<AlertRule> list(@RequestHeader("X-User-Id") String userId) {
+    public List<AlertRule> list(@AuthenticationPrincipal String userId) {
         return service.listForUser(userId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public AlertRule create(@RequestHeader("X-User-Id") String userId,
+    public AlertRule create(@AuthenticationPrincipal String userId,
                             @Valid @RequestBody CreateAlertRequest request) {
         return service.create(userId, request.symbol(), request.direction(),
                 request.threshold(), request.cooldownSeconds());
     }
 
     @GetMapping("/{id}")
-    public AlertRule get(@RequestHeader("X-User-Id") String userId, @PathVariable UUID id) {
+    public AlertRule get(@AuthenticationPrincipal String userId, @PathVariable UUID id) {
         return service.get(userId, id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@RequestHeader("X-User-Id") String userId, @PathVariable UUID id) {
+    public void delete(@AuthenticationPrincipal String userId, @PathVariable UUID id) {
         service.delete(userId, id);
     }
 }

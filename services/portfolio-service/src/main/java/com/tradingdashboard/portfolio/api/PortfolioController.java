@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -41,21 +43,29 @@ public class PortfolioController {
         this.service = service;
     }
 
+    @GetMapping
+    public List<Portfolio> list(@AuthenticationPrincipal String userId) {
+        return service.listForOwner(userId);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Portfolio create(@Valid @RequestBody CreatePortfolioRequest request) {
-        return service.createPortfolio(request.name());
+    public Portfolio create(@AuthenticationPrincipal String userId,
+                            @Valid @RequestBody CreatePortfolioRequest request) {
+        return service.createPortfolio(userId, request.name());
     }
 
     @PostMapping("/{id}/trades")
     @ResponseStatus(HttpStatus.CREATED)
-    public Trade trade(@PathVariable UUID id, @Valid @RequestBody TradeRequest request) {
-        return service.recordTrade(id, request.symbol(), request.side(),
+    public Trade trade(@AuthenticationPrincipal String userId,
+                       @PathVariable UUID id,
+                       @Valid @RequestBody TradeRequest request) {
+        return service.recordTrade(userId, id, request.symbol(), request.side(),
                 request.quantity(), request.price());
     }
 
     @GetMapping("/{id}")
-    public PortfolioView get(@PathVariable UUID id) {
-        return service.getPortfolio(id);
+    public PortfolioView get(@AuthenticationPrincipal String userId, @PathVariable UUID id) {
+        return service.getPortfolio(userId, id);
     }
 }

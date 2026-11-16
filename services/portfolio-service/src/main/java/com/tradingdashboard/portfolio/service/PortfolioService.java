@@ -41,15 +41,19 @@ public class PortfolioService {
         this.prices = prices;
     }
 
-    @Transactional
-    public Portfolio createPortfolio(String name) {
-        return portfolios.save(new Portfolio(name));
+    public List<Portfolio> listForOwner(String ownerId) {
+        return portfolios.findByOwnerIdOrderByCreatedAtAsc(ownerId);
     }
 
     @Transactional
-    public Trade recordTrade(UUID portfolioId, String symbol, Trade.Side side,
-                             BigDecimal quantity, BigDecimal price) {
-        requirePortfolio(portfolioId);
+    public Portfolio createPortfolio(String ownerId, String name) {
+        return portfolios.save(new Portfolio(ownerId, name));
+    }
+
+    @Transactional
+    public Trade recordTrade(String ownerId, UUID portfolioId, String symbol,
+                             Trade.Side side, BigDecimal quantity, BigDecimal price) {
+        requireOwned(ownerId, portfolioId);
         String normalized = symbol.toUpperCase();
 
         Holding holding = holdings.findByPortfolioIdAndSymbol(portfolioId, normalized)
@@ -71,9 +75,8 @@ public class PortfolioService {
     }
 
     @Transactional(readOnly = true)
-    public PortfolioView getPortfolio(UUID portfolioId) {
-        Portfolio portfolio = portfolios.findById(portfolioId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found"));
+    public PortfolioView getPortfolio(String ownerId, UUID portfolioId) {
+        Portfolio portfolio = requireOwned(ownerId, portfolioId);
 
         List<Position> positions = holdings.findByPortfolioId(portfolioId).stream()
                 .filter(h -> h.getQuantity().signum() > 0)
@@ -88,7 +91,6 @@ public class PortfolioService {
         BigDecimal lastPrice = prices.find(h.getSymbol()).map(PriceTick::price).orElse(null);
 
         if (lastPrice == null) {
-            // No tick received yet for this symbol
             return new Position(h.getSymbol(), h.getQuantity(), h.getAverageCost(), null, null, null);
         }
 
@@ -98,9 +100,9 @@ public class PortfolioService {
                 lastPrice, marketValue, unrealizedPnl);
     }
 
-    private void requirePortfolio(UUID portfolioId) {
-        if (!portfolios.existsById(portfolioId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found");
-        }
+    // Returns 404 for portfolios owned by someone else, so IDs don't reveal what exists
+    private Portfolio requireOwned(String ownerId, UUID portfolioId) {
+        return portfolios.findByIdAndOwnerId(portfolioId, ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Portfolio not found"));
     }
 }
