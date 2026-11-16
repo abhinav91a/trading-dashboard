@@ -22,3 +22,4 @@ li { padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
 .trade-form button:disabled { opacity: 0.5; cursor: default; }
 .msg { font-size: 14px; color: #444; margin: 0 0 12px; }
 tfoot td { font-weight: 600; border-bottom: none; }
+.remove { font-size: 12px; padding: 3px 8px; border: 1px solid #ccc; border-radius: 6px; background: #fff; cursor: pointer; }
