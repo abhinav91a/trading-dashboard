@@ -15,6 +15,15 @@ public class FeedListener {
 
     @KafkaListener(topics = {"price-ticks", "alert-triggered"})
     public void onMessage(ConsumerRecord<String, String> record) {
-        feed.broadcast(record.topic(), record.value());
+        if ("alert-triggered".equals(record.topic())) {
+            // Alert events are keyed by user ID. Without a key, drop the event instead of
+            // sending it to everyone.
+            if (record.key() != null) {
+                feed.broadcast(record.topic(), record.key(), record.value());
+            }
+            return;
+        }
+        // Price ticks are public to every authenticated client.
+        feed.broadcast(record.topic(), null, record.value());
     }
 }

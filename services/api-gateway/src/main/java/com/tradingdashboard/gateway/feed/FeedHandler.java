@@ -31,16 +31,20 @@ public class FeedHandler extends TextWebSocketHandler {
         log.info("Feed client disconnected: {} (total {})", session.getId(), sessions.size());
     }
 
-    // Called from the Kafka listener thread. The value is already JSON, so it is
-    // embedded as-is rather than parsed and re-serialized.
-    public void broadcast(String topic, String json) {
+    // ownerId is null for public data (price ticks). Otherwise only sessions authenticated
+    // as that user receive the message.
+    public void broadcast(String topic, String ownerId, String json) {
         String message = "{\"topic\":\"" + topic + "\",\"data\":" + json + "}";
         for (WebSocketSession session : sessions) {
+            Object sessionUser = session.getAttributes().get(TokenHandshakeInterceptor.USER_ATTRIBUTE);
+            if (ownerId != null && !ownerId.equals(sessionUser)) {
+                continue;
+            }
             try {
                 if (session.isOpen()) {
                     session.sendMessage(new TextMessage(message));
                 }
-            } catch (IOException e) {
+            } catch (IOException | IllegalStateException e) {
                 sessions.remove(session);
             }
         }
