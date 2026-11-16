@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useFeed } from './useFeed'
 import { endSession } from './session'
 import PriceTable from './PriceTable'
+import ChartPanel from './ChartPanel'
 import AlertFeed from './AlertFeed'
 import AlertRulesPanel from './AlertRulesPanel'
 import WatchlistPanel from './WatchlistPanel'
@@ -17,9 +18,12 @@ export default function Dashboard({ session }) {
   }, [session.expiresAt])
 
   return (
-    <main>
-      <header>
-        <h1>Trading dashboard</h1>
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="brand">
+          <span className="dot" />
+          <h1>Trading dashboard</h1>
+        </div>
         <div className="header-right">
           <span className={connected ? 'status on' : 'status off'}>
             {connected ? 'Live' : 'Reconnecting'}
@@ -28,13 +32,17 @@ export default function Dashboard({ session }) {
           <button className="remove" onClick={() => endSession()}>Sign out</button>
         </div>
       </header>
-      <div className="grid">
-        <PriceTable prices={prices} />
-        <AlertFeed alerts={alerts} />
-        <AlertRulesPanel prices={prices} />
-        <WatchlistPanel prices={prices} />
-        <PortfolioPanel prices={prices} />
+
+      <div className="workspace">
+        <div className="cell chart-cell"><ChartPanel /></div>
+        <div className="cell price-cell"><PriceTable prices={prices} /></div>
+        <div className="cell portfolio-cell"><PortfolioPanel prices={prices} /></div>
+        <div className="bottom">
+          <div className="cell"><WatchlistPanel prices={prices} /></div>
+          <div className="cell"><AlertRulesPanel prices={prices} /></div>
+          <div className="cell"><AlertFeed alerts={alerts} /></div>
+        </div>
       </div>
-    </main>
+    </div>
   )
 }
