@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
-@ConditionalOnProperty(name = "market-data.simulator.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "market-data.provider", havingValue = "simulated")
 public class PriceSimulator {
 
     private static final Logger log = LoggerFactory.getLogger(PriceSimulator.class);

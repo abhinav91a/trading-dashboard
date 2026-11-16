@@ -1,10 +1,11 @@
+import { useSymbols } from './useSymbols'
 import { useEffect, useState } from 'react'
 import { listRules, createRule, deleteRule } from './alerts'
 
-const SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'AMZN']
 const EMPTY = { symbol: 'AAPL', direction: 'ABOVE', threshold: '', cooldownSeconds: '' }
 
 export default function AlertRulesPanel({ prices }) {
+  const symbols = useSymbols()
   const [rules, setRules] = useState([])
   const [form, setForm] = useState(EMPTY)
   const [message, setMessage] = useState('')
@@ -46,7 +47,7 @@ export default function AlertRulesPanel({ prices }) {
       <h2>Alert rules</h2>
       <form className="trade-form" onSubmit={onCreate}>
         <select value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })}>
-          {SYMBOLS.map((s) => <option key={s}>{s}</option>)}
+          {symbols.map((s) => <option key={s}>{s}</option>)}
         </select>
         <select value={form.direction} onChange={(e) => setForm({ ...form, direction: e.target.value })}>
           <option>ABOVE</option>

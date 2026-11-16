@@ -1,12 +1,13 @@
+import { useSymbols } from './useSymbols'
 import { useEffect, useState } from 'react'
 import { getPortfolioId, fetchPortfolio, recordTrade } from './portfolio'
 
-const SYMBOLS = ['AAPL', 'MSFT', 'GOOGL', 'TSLA', 'AMZN']
 
 const fmt = (n) => (n == null ? '—' : Number(n).toFixed(2))
 const pnlClass = (n) => (n > 0 ? 'up' : n < 0 ? 'down' : '')
 
 export default function PortfolioPanel({ prices }) {
+  const symbols = useSymbols()
   const [portfolioId, setPortfolioId] = useState(null)
   const [view, setView] = useState(null)
   const [form, setForm] = useState({ symbol: 'AAPL', side: 'BUY', quantity: '', price: '' })
@@ -55,7 +56,7 @@ export default function PortfolioPanel({ prices }) {
       <h2>Portfolio</h2>
       <form className="trade-form" onSubmit={submit}>
         <select value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })}>
-          {SYMBOLS.map((s) => <option key={s}>{s}</option>)}
+          {symbols.map((s) => <option key={s}>{s}</option>)}
         </select>
         <select value={form.side} onChange={(e) => setForm({ ...form, side: e.target.value })}>
           <option>BUY</option>

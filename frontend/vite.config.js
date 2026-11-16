@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/auth': 'http://localhost:8085',
+      '/api/market': 'http://localhost:8081',
       '/api/portfolios': 'http://localhost:8082',
       '/api/prices': 'http://localhost:8082',
       '/api/watchlists': 'http://localhost:8083',
