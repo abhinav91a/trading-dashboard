@@ -1,10 +1,22 @@
-import { useSymbols } from './useSymbols'
 import { useEffect, useState } from 'react'
 import { getPortfolioId, fetchPortfolio, recordTrade } from './portfolio'
-
+import { useSymbols } from './useSymbols'
 
 const fmt = (n) => (n == null ? '—' : Number(n).toFixed(2))
 const pnlClass = (n) => (n > 0 ? 'up' : n < 0 ? 'down' : '')
+
+// The server values a position only after it has received a tick. Until then, value it at
+// the feed price, which is the last close when the market is closed.
+function valuation(p, prices) {
+  if (p.marketValue != null) {
+    return { last: Number(p.lastPrice), value: Number(p.marketValue), pnl: Number(p.unrealizedPnl) }
+  }
+  const last = prices[p.symbol]?.price
+  if (last == null) return { last: null, value: null, pnl: null }
+  const quantity = Number(p.quantity)
+  const value = quantity * Number(last)
+  return { last: Number(last), value, pnl: value - quantity * Number(p.averageCost) }
+}
 
 export default function PortfolioPanel({ prices }) {
   const symbols = useSymbols()
@@ -29,7 +41,7 @@ export default function PortfolioPanel({ prices }) {
     e.preventDefault()
     const price = form.price || prices[form.symbol]?.price
     if (!price) {
-      setMessage(`No live price yet for ${form.symbol}`)
+      setMessage(`No price yet for ${form.symbol}`)
       return
     }
     try {
@@ -47,12 +59,13 @@ export default function PortfolioPanel({ prices }) {
     }
   }
 
-  const positions = view?.positions ?? []
-  const totalValue = positions.reduce((s, p) => s + Number(p.marketValue ?? 0), 0)
-  const totalPnl = positions.reduce((s, p) => s + Number(p.unrealizedPnl ?? 0), 0)
+  const rows = (view?.positions ?? []).map((p) => ({ ...p, ...valuation(p, prices) }))
+  const fullyPriced = rows.every((r) => r.value != null)
+  const totalValue = fullyPriced && rows.length > 0 ? rows.reduce((s, r) => s + r.value, 0) : null
+  const totalPnl = fullyPriced && rows.length > 0 ? rows.reduce((s, r) => s + r.pnl, 0) : null
 
   return (
-    <section className="full">
+    <section>
       <h2>Portfolio</h2>
       <form className="trade-form" onSubmit={submit}>
         <select value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })}>
@@ -88,23 +101,23 @@ export default function PortfolioPanel({ prices }) {
           </tr>
         </thead>
         <tbody>
-          {positions.length === 0 && (
+          {rows.length === 0 && (
             <tr>
               <td colSpan={6}>No positions yet</td>
             </tr>
           )}
-          {positions.map((p) => (
-            <tr key={p.symbol}>
-              <td>{p.symbol}</td>
-              <td>{Number(p.quantity)}</td>
-              <td>{fmt(p.averageCost)}</td>
-              <td>{fmt(p.lastPrice)}</td>
-              <td>{fmt(p.marketValue)}</td>
-              <td className={pnlClass(Number(p.unrealizedPnl))}>{fmt(p.unrealizedPnl)}</td>
+          {rows.map((r) => (
+            <tr key={r.symbol}>
+              <td>{r.symbol}</td>
+              <td>{Number(r.quantity)}</td>
+              <td>{fmt(r.averageCost)}</td>
+              <td>{fmt(r.last)}</td>
+              <td>{fmt(r.value)}</td>
+              <td className={pnlClass(r.pnl)}>{fmt(r.pnl)}</td>
             </tr>
           ))}
         </tbody>
-        {positions.length > 0 && (
+        {rows.length > 0 && (
           <tfoot>
             <tr>
               <td colSpan={4}>Total</td>

@@ -62,6 +62,9 @@ export async function register(username, password) {
   })
   if (res.status === 409) throw new Error('That username is taken')
   if (res.status === 400) throw new Error('Username must be 3 to 50 characters and password 8 to 72')
+  if (res.status === 502 || res.status === 503) {
+    throw new Error('Authentication service is unavailable. Start auth-service on port 8085 and try again.')
+  }
   if (!res.ok) throw new Error(`Registration failed (${res.status})`)
 }
 
@@ -72,6 +75,9 @@ export async function login(username, password) {
     body: JSON.stringify({ username, password }),
   })
   if (res.status === 401) throw new Error('Wrong username or password')
+  if (res.status === 502 || res.status === 503) {
+    throw new Error('Authentication service is unavailable. Start auth-service on port 8085 and try again.')
+  }
   if (!res.ok) throw new Error(`Sign-in failed (${res.status})`)
   const { token } = await res.json()
   localStorage.setItem(TOKEN_KEY, token)

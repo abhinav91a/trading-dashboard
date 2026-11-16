@@ -1,5 +1,30 @@
 # React + Vite
 
+## Run the dashboard locally
+
+Sign-in requires PostgreSQL and the auth service on port 8085. From the
+repository root, start PostgreSQL:
+
+```bash
+docker compose up -d postgres
+```
+
+On a new PostgreSQL data volume, this creates `auth_db` along with the other
+service databases. If the volume was initialized before `auth_db` was added,
+create it once by running `CREATE DATABASE auth_db;` while connected to the
+`postgres` database.
+
+In another shell, set a local JWT signing secret and start auth:
+
+```bash
+export JWT_SECRET="$(openssl rand -hex 32)"
+cd services/auth-service
+./mvnw spring-boot:run
+```
+
+Then start the frontend from `frontend/` with `npm run dev`. Its Vite proxy
+sends `/api/auth` requests to `http://localhost:8085`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

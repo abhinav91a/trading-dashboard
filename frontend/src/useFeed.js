@@ -3,10 +3,40 @@ import { authFetch } from './session'
 
 const MAX_ALERTS = 50
 
+// Last trade and previous close for every configured symbol. This fills the table before the
+// first live tick and outside market hours. Market data is public, so no token is sent.
+async function loadSnapshots() {
+  const symbols = await fetch('/api/market/symbols').then((r) => r.json())
+  return fetch(`/api/market/snapshots?symbols=${symbols.join(',')}`).then((r) => r.json())
+}
+
 export function useFeed(token) {
   const [prices, setPrices] = useState({})
   const [alerts, setAlerts] = useState([])
   const [connected, setConnected] = useState(false)
+
+  // A live tick that arrived first keeps its price. The snapshot only supplies the previous close.
+  useEffect(() => {
+    let cancelled = false
+    loadSnapshots()
+      .then((rows) => {
+        if (cancelled) return
+        setPrices((prev) => {
+          const next = { ...prev }
+          for (const row of rows) {
+            const current = next[row.symbol]
+            next[row.symbol] = current
+              ? { ...current, previous: current.previous ?? row.previousClose }
+              : { symbol: row.symbol, price: row.price, previous: row.previousClose, timestamp: row.timestamp }
+          }
+          return next
+        })
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     let socket
@@ -28,9 +58,11 @@ export function useFeed(token) {
       socket.onmessage = (event) => {
         const { topic, data } = JSON.parse(event.data)
         if (topic === 'price-ticks') {
+          // "previous" is the previous close. It carries over from the snapshot, so Change
+          // shows the move since the last session rather than since the last tick.
           setPrices((prev) => ({
             ...prev,
-            [data.symbol]: { ...data, previous: prev[data.symbol]?.price ?? null },
+            [data.symbol]: { ...data, previous: prev[data.symbol]?.previous ?? null },
           }))
         } else if (topic === 'alert-triggered') {
           setAlerts((prev) => [data, ...prev].slice(0, MAX_ALERTS))
@@ -41,11 +73,7 @@ export function useFeed(token) {
         setConnected(false)
         if (closed) return
         failures += 1
-        if (failures >= 3) {
-          // Browsers hide the handshake status, so a REST call tells us whether the token is bad.
-          // A 401 ends the session. Other errors are ignored and the socket keeps retrying.
-          authFetch('/api/watchlists').catch(() => {})
-        }
+        if (failures >= 3) authFetch('/api/watchlists').catch(() => {})
         retryTimer = setTimeout(connect, Math.min(2000 * failures, 15000))
       }
     }

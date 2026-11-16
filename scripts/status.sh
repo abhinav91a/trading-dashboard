@@ -22,7 +22,7 @@ done
 
 echo
 echo "== Spring services"
-for entry in market-data:8081 portfolio:8082 watchlist:8083 alert:8084 gateway:8080; do
+for entry in market-data:8081 portfolio:8082 watchlist:8083 alert:8084 auth:8085 gateway:8080; do
   name=${entry%%:*}
   port=${entry##*:}
   code=$(curl -s -o /dev/null -m 3 -w '%{http_code}' "http://localhost:$port/actuator/health")
