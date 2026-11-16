@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
+import { authFetch } from './session'
 
 const MAX_ALERTS = 50
 
-// Opens the gateway's WebSocket and keeps the latest prices and alerts in state.
-export function useFeed() {
+export function useFeed(token) {
   const [prices, setPrices] = useState({})
   const [alerts, setAlerts] = useState([])
   const [connected, setConnected] = useState(false)
@@ -12,12 +12,18 @@ export function useFeed() {
     let socket
     let retryTimer
     let closed = false
+    let failures = 0
 
     function connect() {
+      if (closed) return
       const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      socket = new WebSocket(`${scheme}://${window.location.host}/ws/feed`)
+      const url = `${scheme}://${window.location.host}/ws/feed?token=${encodeURIComponent(token)}`
+      socket = new WebSocket(url)
 
-      socket.onopen = () => setConnected(true)
+      socket.onopen = () => {
+        failures = 0
+        setConnected(true)
+      }
 
       socket.onmessage = (event) => {
         const { topic, data } = JSON.parse(event.data)
@@ -33,7 +39,14 @@ export function useFeed() {
 
       socket.onclose = () => {
         setConnected(false)
-        if (!closed) retryTimer = setTimeout(connect, 2000)
+        if (closed) return
+        failures += 1
+        if (failures >= 3) {
+          // Browsers hide the handshake status, so a REST call tells us whether the token is bad.
+          // A 401 ends the session. Other errors are ignored and the socket keeps retrying.
+          authFetch('/api/watchlists').catch(() => {})
+        }
+        retryTimer = setTimeout(connect, Math.min(2000 * failures, 15000))
       }
     }
 
@@ -43,7 +56,7 @@ export function useFeed() {
       clearTimeout(retryTimer)
       socket?.close()
     }
-  }, [])
+  }, [token])
 
   return { prices, alerts, connected }
 }

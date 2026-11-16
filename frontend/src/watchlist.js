@@ -1,7 +1,6 @@
+import { authFetch, JSON_HEADERS } from './session'
+
 const BASE = '/api/watchlists'
-// Until login exists (Step 8), every request is made as this user.
-const USER_ID = 'alice'
-const headers = { 'Content-Type': 'application/json', 'X-User-Id': USER_ID }
 
 async function check(res, action) {
   if (res.status === 409) throw new Error(`${action}: already exists`)
@@ -9,25 +8,20 @@ async function check(res, action) {
   return res.status === 204 ? null : res.json()
 }
 
-export function listWatchlists() {
-  return fetch(BASE, { headers }).then((r) => check(r, 'Load lists'))
-}
+export const listWatchlists = () =>
+  authFetch(BASE).then((r) => check(r, 'Load lists'))
 
-export function createWatchlist(name) {
-  return fetch(BASE, { method: 'POST', headers, body: JSON.stringify({ name }) })
+export const createWatchlist = (name) =>
+  authFetch(BASE, { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ name }) })
     .then((r) => check(r, 'Create list'))
-}
 
-export function getWatchlist(id) {
-  return fetch(`${BASE}/${id}`, { headers }).then((r) => check(r, 'Load list'))
-}
+export const getWatchlist = (id) =>
+  authFetch(`${BASE}/${id}`).then((r) => check(r, 'Load list'))
 
-export function addSymbol(id, symbol) {
-  return fetch(`${BASE}/${id}/items`, { method: 'POST', headers, body: JSON.stringify({ symbol }) })
+export const addSymbol = (id, symbol) =>
+  authFetch(`${BASE}/${id}/items`, { method: 'POST', headers: JSON_HEADERS, body: JSON.stringify({ symbol }) })
     .then((r) => check(r, 'Add symbol'))
-}
 
-export function removeSymbol(id, symbol) {
-  return fetch(`${BASE}/${id}/items/${symbol}`, { method: 'DELETE', headers })
+export const removeSymbol = (id, symbol) =>
+  authFetch(`${BASE}/${id}/items/${symbol}`, { method: 'DELETE' })
     .then((r) => check(r, 'Remove symbol'))
-}

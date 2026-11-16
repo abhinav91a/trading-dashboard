@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
+      '/api/auth': 'http://localhost:8085',
       '/api/portfolios': 'http://localhost:8082',
       '/api/prices': 'http://localhost:8082',
       '/api/watchlists': 'http://localhost:8083',

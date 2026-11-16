@@ -1,29 +1,19 @@
-import { useFeed } from './useFeed'
-import PriceTable from './PriceTable'
-import AlertFeed from './AlertFeed'
-import AlertRulesPanel from './AlertRulesPanel'
-import WatchlistPanel from './WatchlistPanel'
-import PortfolioPanel from './PortfolioPanel'
+import { useEffect, useState } from 'react'
+import { getSession } from './session'
+import LoginScreen from './LoginScreen'
+import Dashboard from './Dashboard'
 import './App.css'
 
 export default function App() {
-  const { prices, alerts, connected } = useFeed()
+  const [session, setSession] = useState(getSession)
 
-  return (
-    <main>
-      <header>
-        <h1>Trading dashboard</h1>
-        <span className={connected ? 'status on' : 'status off'}>
-          {connected ? 'Live' : 'Reconnecting'}
-        </span>
-      </header>
-      <div className="grid">
-        <PriceTable prices={prices} />
-        <AlertFeed alerts={alerts} />
-        <AlertRulesPanel prices={prices} />
-        <WatchlistPanel prices={prices} />
-        <PortfolioPanel prices={prices} />
-      </div>
-    </main>
-  )
+  // endSession() fires this event on sign-out, on expiry, and on any 401 from an API call
+  useEffect(() => {
+    const clear = () => setSession(null)
+    window.addEventListener('session-ended', clear)
+    return () => window.removeEventListener('session-ended', clear)
+  }, [])
+
+  if (!session) return <LoginScreen onSignedIn={setSession} />
+  return <Dashboard session={session} />
 }
